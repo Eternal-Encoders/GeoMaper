@@ -9,8 +9,10 @@ RUN yarn install
 COPY ./public ./public
 COPY ./src ./src
 COPY ./tsconfig.json ./tsconfig.json
-COPY ./nginx.conf ./nginx.conf
 COPY ./tsconfig.node.json ./tsconfig.node.json
+COPY ./tsconfig.app.json ./tsconfig.app.json
+COPY ./vite.config.ts ./vite.config.ts
+COPY ./nginx.conf ./nginx.conf
 COPY ./index.html ./index.html
 COPY ./.env.production ./.env.production
 
