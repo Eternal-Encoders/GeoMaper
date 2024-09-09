@@ -13,7 +13,8 @@ function InstitutePage() {
     const isNotFound = !instName || !Number.isInteger(instFloorNum);
 
     if (isNotFound) {
-        return navigate("not-found");
+        navigate("not-found");
+        return (<></>);
     } else {
         return (
             <>
