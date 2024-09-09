@@ -1,0 +1,13 @@
+const SCALE_BY = 1.09;
+const MAX_SCALE = 6;
+const MIN_SCALE = 0.09;
+const POSITION_THRESHOLD = 100;
+const ROTATION_THRESHOLD = 30;
+
+export {
+    SCALE_BY,
+    MAX_SCALE,
+    MIN_SCALE,
+    POSITION_THRESHOLD,
+    ROTATION_THRESHOLD
+}
