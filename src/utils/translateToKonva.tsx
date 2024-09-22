@@ -1,6 +1,7 @@
 import { Line, Path } from "react-konva";
-import { Audience, AudienceIcon, AudienceText, GeoMapPoint } from "../components/konva-components"
-import { GeoPoint, IAuditorium, IService } from "./interface";
+import { Audience, AudienceIcon, AudienceText, GeoMapPoint, UserPoint } from "../components/konva-components"
+import { MaperPoint, IAuditorium, IService, Point } from "./interface";
+import { ReactNode } from "react";
 
 function getAudiences(audiences: IAuditorium[]): React.ReactNode[] {
     return audiences.map((auditorium) => {
@@ -68,14 +69,19 @@ function getService(services: IService[]): React.ReactNode[] {
     })
 }
 
-function getGeoMapPoints(points: GeoPoint[]): React.ReactNode[] {
+function getGeoMapPoints(points: MaperPoint[]): React.ReactNode[] {
     return points.map((e, i) => (
         <GeoMapPoint key={`point-${i}`} {...e} />
     ));
 }
 
+function getUserPoint(coords: Point): ReactNode {
+    return <UserPoint {...coords} />
+}
+
 export { 
     getAudiences, 
     getService,
-    getGeoMapPoints
+    getGeoMapPoints,
+    getUserPoint
 }

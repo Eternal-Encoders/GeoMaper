@@ -4,7 +4,9 @@ import { useRef } from "react";
 import Konva from "konva";
 import { useAppSelector } from "../../store/hook";
 import { selectAllPoints } from "../../features/points/pointsSlice";
-import { getGeoMapPoints } from "../../utils/translateToKonva";
+import { getGeoMapPoints, getUserPoint } from "../../utils/translateToKonva";
+import { getInterpolator } from "../../utils/interpolation";
+import { getRegressor, fromSphericalToRect } from "../../utils/gps";
 
 interface RenderMapProps {
     instName: string,
@@ -24,6 +26,7 @@ function RenderMap({instName, instFloorNum}: RenderMapProps) {
     } = useMapInitiate(stageRef, instName, instFloorNum);
 
     const {
+        userPoint,
         handelWheel,
         handleTouch,
         handleTouchEnd,
@@ -38,6 +41,9 @@ function RenderMap({instName, instFloorNum}: RenderMapProps) {
     );
 
     const points = useAppSelector(selectAllPoints);
+    const userPointRect = fromSphericalToRect(userPoint);
+    const locationRegressor = points.length >= 3 ? getRegressor(points) : undefined;
+    const interpolator = points.length > 0 && locationRegressor ? getInterpolator(points, locationRegressor) : undefined;
 
     return (
         <Stage
@@ -57,6 +63,9 @@ function RenderMap({instName, instFloorNum}: RenderMapProps) {
                 {service}
             </Layer>
             <Layer key={"points"}>
+                {interpolator &&
+                    getUserPoint(interpolator(userPointRect))
+                }
                 {getGeoMapPoints(points)}
             </Layer>
         </Stage>

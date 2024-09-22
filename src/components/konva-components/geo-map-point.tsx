@@ -1,8 +1,8 @@
 import { Circle } from "react-konva";
-import { GeoPoint } from "../../utils/interface";
+import { MaperPoint } from "../../utils/interface";
 
 
-function GeoMapPoint({x, y}: GeoPoint) {
+function GeoMapPoint({x, y}: MaperPoint) {
     return (
         <Circle
             x={x}

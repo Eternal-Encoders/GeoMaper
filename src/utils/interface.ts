@@ -69,9 +69,22 @@ export interface Point {
     y: number
 }
 
+export interface GpsPoint {
+    latitude: number,
+    longitude: number,
+    altitude: number
+}
+
 export interface GeoPoint {
     x: number,
     y: number,
-    latitude: number,
-    longitude: number
+    z: number
+}
+
+export interface MaperPoint {
+    x: number,
+    y: number,
+    geoX: number,
+    geoY: number,
+    geoZ: number
 }

@@ -1,11 +1,19 @@
 import { Box, Grid2, Typography } from "@mui/material";
 import { useOverlay } from "./OverlayHook";
+import { fromSphericalToRect } from "../../utils/gps";
 
 function OveralyMap() {
     const {
         latitude,
-        longitude
+        longitude,
+        altitude
     } = useOverlay();
+
+    const rectCoords = fromSphericalToRect({
+        latitude,
+        longitude,
+        altitude
+    });
 
     return (
         <div 
@@ -27,16 +35,23 @@ function OveralyMap() {
                             Latitude
                         </Typography>
                         <Typography component="span">
-                            {latitude}
+                            {rectCoords.x}
                         </Typography>
                     </Box>
                     <Box>
                         <Typography component="span" mr={1.5}>
                             Longitude
-
                         </Typography>
                         <Typography component="span">
-                            {longitude}
+                            {rectCoords.y}
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography component="span" mr={1.5}>
+                            Altitude
+                        </Typography>
+                        <Typography component="span">
+                            {rectCoords.z}
                         </Typography>
                     </Box>
                 </Grid2>

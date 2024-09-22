@@ -9,6 +9,7 @@ import { selectLocation } from "../../features/location/locationSlice";
 import { pointPush } from "../../features/points/pointsSlice";
 
 import Konva from "konva";
+import { fromSphericalToRect } from "../../utils/gps";
 
 function useRenderMap(
     stageRef: RefObject<Konva.Stage>,
@@ -27,11 +28,13 @@ function useRenderMap(
     let lastAngle: number | null = null;
 
     function addPointToPoints(x: number, y: number) {
+        const geoCoords = fromSphericalToRect(coords);
         dispatch(pointPush({
             x: x,
             y: y,
-            latitude: coords.latitude,
-            longitude: coords.longitude
+            geoX: geoCoords.x,
+            geoY: geoCoords.y,
+            geoZ: geoCoords.z
         }));
     }
     
@@ -200,6 +203,7 @@ function useRenderMap(
     }
 
     return {
+        userPoint: coords,
         handelWheel,
         handleTouch,
         handleTouchEnd,

@@ -1,23 +1,25 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { GeoPoint } from "../../utils/interface";
+import { MaperPoint } from "../../utils/interface";
 
-const initialState: GeoPoint[] = [];
+const initialState: MaperPoint[] = [];
 
 const pointsSlice = createSlice({
     name: "points",
     initialState,
     reducers: {
-        pointPush: (state, action: PayloadAction<GeoPoint>) => {
+        pointPush: (state, action: PayloadAction<MaperPoint>) => {
             const x = action.payload.x;
             const y = action.payload.y;
-            const latitude = action.payload.latitude;
-            const longitude = action.payload.longitude;
+            const geoX = action.payload.geoX;
+            const geoY = action.payload.geoY;
+            const geoZ = action.payload.geoZ
 
             state.push({
                 x,
                 y,
-                latitude,
-                longitude
+                geoX,
+                geoY,
+                geoZ
             });
         },
         pointsPop: (state) => {

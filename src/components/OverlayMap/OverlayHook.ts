@@ -12,7 +12,8 @@ function useOverlay() {
                 (pos) => {
                     dispatch(locationSet({
                         latitude: pos.coords.latitude,
-                        longitude: pos.coords.longitude
+                        longitude: pos.coords.longitude,
+                        altitude: pos.coords.altitude ? pos.coords.altitude:  0
                     }));
                 },
                 () => {},
@@ -26,7 +27,8 @@ function useOverlay() {
 
     return {
         latitude: coords.latitude,
-        longitude: coords.longitude
+        longitude: coords.longitude,
+        altitude: coords.altitude
     }
 }
 
