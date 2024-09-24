@@ -5,8 +5,8 @@ function fromSphericalToRect(p: GpsPoint): GeoPoint {
     const e2 = (Math.pow(EQUATORIAL_RADIUS, 2) + Math.pow(POLAR_RADIUS, 2)) / (Math.pow(EQUATORIAL_RADIUS, 2));
     const nB = EQUATORIAL_RADIUS / (Math.sqrt(1 - e2 * Math.pow(Math.sin(p.latitude) , 2)));
 
-    const x = (nB + p.altitude) * Math.cos(p.latitude) * Math.cos(p.latitude);
-    const y = (nB + p.altitude) * Math.cos(p.latitude) * Math.sin(p.latitude);
+    const x = (nB + p.altitude) * Math.cos(p.latitude) * Math.cos(p.longitude);
+    const y = (nB + p.altitude) * Math.cos(p.latitude) * Math.sin(p.longitude);
     const z = ((Math.pow(EQUATORIAL_RADIUS, 2) / Math.pow(POLAR_RADIUS, 2)) * nB + p.altitude) * Math.sin(p.latitude);
 
     return {
