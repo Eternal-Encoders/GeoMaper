@@ -84,7 +84,7 @@ export interface GeoPoint {
 export interface MaperPoint {
     x: number,
     y: number,
-    geoX: number,
-    geoY: number,
-    geoZ: number
+    lat: number,
+    long: number,
+    alt: number
 }

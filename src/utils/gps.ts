@@ -2,12 +2,12 @@ import { EQUATORIAL_RADIUS, POLAR_RADIUS } from "./constants";
 import { MaperPoint, GpsPoint, Point, GeoPoint } from "./interface";
 
 function fromSphericalToRect(p: GpsPoint): GeoPoint {
-    const e2 = (Math.pow(EQUATORIAL_RADIUS, 2) + Math.pow(POLAR_RADIUS, 2)) / (Math.pow(EQUATORIAL_RADIUS, 2));
+    const e2 = (Math.pow(EQUATORIAL_RADIUS, 2) - Math.pow(POLAR_RADIUS, 2)) / (Math.pow(EQUATORIAL_RADIUS, 2));
     const nB = EQUATORIAL_RADIUS / (Math.sqrt(1 - e2 * Math.pow(Math.sin(p.latitude) , 2)));
 
     const x = (nB + p.altitude) * Math.cos(p.latitude) * Math.cos(p.longitude);
     const y = (nB + p.altitude) * Math.cos(p.latitude) * Math.sin(p.longitude);
-    const z = ((Math.pow(EQUATORIAL_RADIUS, 2) / Math.pow(POLAR_RADIUS, 2)) * nB + p.altitude) * Math.sin(p.latitude);
+    const z = ((Math.pow(POLAR_RADIUS, 2) / Math.pow(EQUATORIAL_RADIUS, 2)) * nB + p.altitude) * Math.sin(p.latitude);
 
     return {
         x,
@@ -37,19 +37,25 @@ function getRegressor(points: MaperPoint[]): (point: GeoPoint) => Point {
     let avgX1X2 = 0;
 
     for (const point of points) {
-        avgX1 += point.geoX;
-        avgX2 += point.geoY;
+        const rectPoint = fromSphericalToRect({
+            latitude: point.lat,
+            longitude: point.long,
+            altitude: point.alt
+        });
+        
+        avgX1 += rectPoint.x;
+        avgX2 += rectPoint.y;
         avgY1 += point.x;
         avgY2 += point.y;
-        avgX1S += Math.pow(point.geoX, 2);
-        avgX2S += Math.pow(point.geoY, 2);
+        avgX1S += Math.pow(rectPoint.x, 2);
+        avgX2S += Math.pow(rectPoint.y, 2);
         avgY1S += Math.pow(point.x, 2);
         avgY2S += Math.pow(point.y, 2);
-        avgY1X1 += point.x * point.geoX;
-        avgY2X1 += point.y * point.geoX;
-        avgY1X2 += point.x * point.geoY;
-        avgY2X2 += point.y * point.geoY;
-        avgX1X2 += point.geoX * point.geoY;
+        avgY1X1 += point.x * rectPoint.x;
+        avgY2X1 += point.y * rectPoint.y;
+        avgY1X2 += point.x * rectPoint.y;
+        avgY2X2 += point.y * rectPoint.y;
+        avgX1X2 += rectPoint.x * rectPoint.y;
     }
 
     avgX1 /= n;

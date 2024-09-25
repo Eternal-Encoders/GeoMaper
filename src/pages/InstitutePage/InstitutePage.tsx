@@ -18,8 +18,8 @@ function InstitutePage() {
     } else {
         return (
             <>
-                <OveralyMap />
-                <RenderMap  instName={instName} instFloorNum={instFloorNum} />
+                <OveralyMap instName={instName} instFloorNum={instFloorNum} />
+                <RenderMap instName={instName} instFloorNum={instFloorNum} />
             </>
         );
     }

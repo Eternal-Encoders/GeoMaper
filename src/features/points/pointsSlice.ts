@@ -10,16 +10,16 @@ const pointsSlice = createSlice({
         pointPush: (state, action: PayloadAction<MaperPoint>) => {
             const x = action.payload.x;
             const y = action.payload.y;
-            const geoX = action.payload.geoX;
-            const geoY = action.payload.geoY;
-            const geoZ = action.payload.geoZ
+            const lat = action.payload.lat;
+            const long = action.payload.long;
+            const alt = action.payload.alt
 
             state.push({
                 x,
                 y,
-                geoX,
-                geoY,
-                geoZ
+                lat,
+                long,
+                alt
             });
         },
         pointsPop: (state) => {

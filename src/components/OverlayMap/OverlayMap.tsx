@@ -1,19 +1,35 @@
-import { Box, Grid2, Typography } from "@mui/material";
+import { Box, Button, Grid2, Typography } from "@mui/material";
 import { useOverlay } from "./OverlayHook";
 import { fromSphericalToRect } from "../../utils/gps";
+import { useAppSelector } from "../../store/hook";
+import { selectAllPoints } from "../../features/points/pointsSlice";
 
-function OveralyMap() {
+interface OveralyMapProps {
+    instName: string,
+    instFloorNum: number
+}
+
+function OveralyMap({instName, instFloorNum}: OveralyMapProps) {
     const {
         latitude,
         longitude,
         altitude
     } = useOverlay();
+    const points = useAppSelector(selectAllPoints);
 
     const rectCoords = fromSphericalToRect({
         latitude,
         longitude,
         altitude
     });
+
+    function handelOnClick() {
+        const link = document.createElement("a");
+        const newFile = new Blob([JSON.stringify(points)], { type: "application/json" });
+        link.href = URL.createObjectURL(newFile);
+        link.download = `${instName}_${instFloorNum}.json`;
+        link.click();
+    }
 
     return (
         <div 
@@ -32,7 +48,7 @@ function OveralyMap() {
                 <Grid2>
                     <Box>
                         <Typography component="span" mr={1.5}>
-                            Latitude
+                            X
                         </Typography>
                         <Typography component="span">
                             {rectCoords.x}
@@ -40,7 +56,7 @@ function OveralyMap() {
                     </Box>
                     <Box>
                         <Typography component="span" mr={1.5}>
-                            Longitude
+                            Y
                         </Typography>
                         <Typography component="span">
                             {rectCoords.y}
@@ -48,12 +64,15 @@ function OveralyMap() {
                     </Box>
                     <Box>
                         <Typography component="span" mr={1.5}>
-                            Altitude
+                            Z
                         </Typography>
                         <Typography component="span">
                             {rectCoords.z}
                         </Typography>
                     </Box>
+                    <Button variant="contained" onClick={handelOnClick}>
+                        Скачать точки
+                    </Button>
                 </Grid2>
             </Grid2> 
         </div>

@@ -6,10 +6,17 @@ function getInterpolator(
 ): (point: GeoPoint) => Point {
 
     function IDW(newPoint: GeoPoint): Point {
+        const newPointMap = regressor(newPoint);
+
         let wSum = 0;
         const weights = points.map((e) => {
-            const d0 = e.geoX - newPoint.x;
-            const d1 = e.geoY - newPoint.y;
+            const linear_point = regressor({
+                x: e.x,
+                y: e.y,
+                z: 0
+            })
+            const d0 = linear_point.x - newPointMap.x;
+            const d1 = linear_point.y - newPointMap.y;
 
             const dist = Math.pow(d0*d0 + d1*d1, 0.5);
             const weight = 1.0 / (dist+1e-12)*(dist+1e-12)
@@ -17,20 +24,26 @@ function getInterpolator(
             return weight
         });
 
-        const newPointMap = regressor(newPoint);
-
         const newdX = weights.reduce(
-            (prev, cur, i) => prev + (cur / wSum * (points[i].x - newPointMap.x)), 
+            (prev, cur, i) => prev + (cur / wSum * (points[i].x - regressor({
+                x: points[i].x,
+                y: points[i].y,
+                z: 0
+            }).x)), 
             0
         );
         const newdY = weights.reduce(
-            (prev, cur, i) => prev + (cur / wSum * (points[i].y - newPointMap.y)), 
+            (prev, cur, i) => prev + (cur / wSum * (points[i].y - regressor({
+                x: points[i].x,
+                y: points[i].y,
+                z: 0
+            }).y)), 
             0
         );
 
         return {
-            x: newPoint.x + newdX,
-            y: newPoint.y + newdY
+            x: newPointMap.x + newdX,
+            y: newPointMap.y + newdY
         }
     }
 
