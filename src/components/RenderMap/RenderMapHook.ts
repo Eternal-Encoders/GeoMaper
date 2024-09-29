@@ -30,9 +30,9 @@ function useRenderMap(
         dispatch(pointPush({
             x: x,
             y: y,
-            lat: coords.latitude,
-            long: coords.longitude,
-            alt: coords.altitude
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            altitude: coords.altitude
         }));
     }
     

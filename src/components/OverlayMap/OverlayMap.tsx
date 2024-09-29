@@ -1,6 +1,6 @@
 import { Box, Button, Grid2, Typography } from "@mui/material";
 import { useOverlay } from "./OverlayHook";
-import { fromSphericalToRect } from "../../utils/gps";
+import { flattenSpherical } from "../../utils/gps";
 import { useAppSelector } from "../../store/hook";
 import { selectAllPoints } from "../../features/points/pointsSlice";
 
@@ -17,7 +17,7 @@ function OveralyMap({instName, instFloorNum}: OveralyMapProps) {
     } = useOverlay();
     const points = useAppSelector(selectAllPoints);
 
-    const rectCoords = fromSphericalToRect({
+    const rectCoords = flattenSpherical({
         latitude,
         longitude,
         altitude

@@ -5,8 +5,7 @@ import Konva from "konva";
 import { useAppSelector } from "../../store/hook";
 import { selectAllPoints } from "../../features/points/pointsSlice";
 import { getGeoMapPoints, getUserPoint } from "../../utils/translateToKonva";
-// import { getInterpolator } from "../../utils/interpolation";
-import { getRegressor, fromSphericalToRect } from "../../utils/gps";
+import { pipelineToMap } from "../../utils/gps";
 
 interface RenderMapProps {
     instName: string,
@@ -41,10 +40,7 @@ function RenderMap({instName, instFloorNum}: RenderMapProps) {
     );
 
     const points = useAppSelector(selectAllPoints);
-    console.log(points)
-    const userPointRect = fromSphericalToRect(userPoint);
-    const locationRegressor = points.length >= 3 ? getRegressor(points) : undefined;
-    // const interpolator = locationRegressor ? getInterpolator(points, locationRegressor) : undefined;
+    const userMapPoint = pipelineToMap(points, userPoint);
 
     return (
         <Stage
@@ -64,8 +60,8 @@ function RenderMap({instName, instFloorNum}: RenderMapProps) {
                 {service}
             </Layer>
             <Layer key={"points"}>
-                {locationRegressor &&
-                    getUserPoint(locationRegressor(userPointRect))
+                {userMapPoint &&
+                    getUserPoint(userMapPoint)
                 }
                 {getGeoMapPoints(points)}
             </Layer>

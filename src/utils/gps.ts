@@ -1,13 +1,16 @@
-import { EQUATORIAL_RADIUS, POLAR_RADIUS } from "./constants";
+import { EQUATORIAL_RADIUS, INTERPOLATION_RATE, POLAR_RADIUS } from "./constants";
 import { MaperPoint, GpsPoint, Point, GeoPoint } from "./interface";
 
-function fromSphericalToRect(p: GpsPoint): GeoPoint {
-    const e2 = (Math.pow(EQUATORIAL_RADIUS, 2) - Math.pow(POLAR_RADIUS, 2)) / (Math.pow(EQUATORIAL_RADIUS, 2));
-    const nB = EQUATORIAL_RADIUS / (Math.sqrt(1 - e2 * Math.pow(Math.sin(p.latitude) , 2)));
+function flattenSpherical(p: GpsPoint): GeoPoint {
+    const latRad = p.latitude * (Math.PI / 180);
+    const longRad = p.longitude * (Math.PI / 180);
 
-    const x = (nB + p.altitude) * Math.cos(p.latitude) * Math.cos(p.longitude);
-    const y = (nB + p.altitude) * Math.cos(p.latitude) * Math.sin(p.longitude);
-    const z = ((Math.pow(POLAR_RADIUS, 2) / Math.pow(EQUATORIAL_RADIUS, 2)) * nB + p.altitude) * Math.sin(p.latitude);
+    const e2 = (Math.pow(EQUATORIAL_RADIUS, 2) - Math.pow(POLAR_RADIUS, 2)) / (Math.pow(EQUATORIAL_RADIUS, 2));
+    const nB = EQUATORIAL_RADIUS / (Math.sqrt(1 - e2 * Math.pow(Math.sin(latRad) , 2)));
+
+    const x = (nB + p.altitude) * Math.cos(latRad) * Math.cos(longRad);
+    const y = (nB + p.altitude) * Math.cos(latRad) * Math.sin(longRad);
+    const z = ((Math.pow(POLAR_RADIUS, 2) / Math.pow(EQUATORIAL_RADIUS, 2)) * nB + p.altitude) * Math.sin(latRad);
 
     return {
         x,
@@ -16,7 +19,7 @@ function fromSphericalToRect(p: GpsPoint): GeoPoint {
     }
 }
 
-function getRegressor(points: MaperPoint[]): (point: GeoPoint) => Point {
+function getRegressor(points: GeoPoint[], scalar: number[]): (point: GeoPoint) => number {
     if (points.length < 3) {
         throw RangeError;
     }
@@ -24,85 +27,143 @@ function getRegressor(points: MaperPoint[]): (point: GeoPoint) => Point {
     const n = points.length;
     let avgX1 = 0;
     let avgX2 = 0;
-    let avgY1 = 0;
-    let avgY2 = 0;
+    let avgY = 0;
     let avgX1S = 0;
     let avgX2S = 0;
-    let avgY1S = 0;
-    let avgY2S = 0;
-    let avgY1X1 = 0;
-    let avgY2X1 = 0;
-    let avgY1X2 = 0;
-    let avgY2X2 = 0;
+    let avgYS = 0;
+    let avgYX1 = 0;
+    let avgYX2 = 0;
     let avgX1X2 = 0;
 
-    for (const point of points) {
-        const rectPoint = fromSphericalToRect({
-            latitude: point.lat,
-            longitude: point.long,
-            altitude: point.alt
-        });
-        
-        avgX1 += rectPoint.x;
-        avgX2 += rectPoint.y;
-        avgY1 += point.x;
-        avgY2 += point.y;
-        avgX1S += Math.pow(rectPoint.x, 2);
-        avgX2S += Math.pow(rectPoint.y, 2);
-        avgY1S += Math.pow(point.x, 2);
-        avgY2S += Math.pow(point.y, 2);
-        avgY1X1 += point.x * rectPoint.x;
-        avgY2X1 += point.y * rectPoint.y;
-        avgY1X2 += point.x * rectPoint.y;
-        avgY2X2 += point.y * rectPoint.y;
-        avgX1X2 += rectPoint.x * rectPoint.y;
+    for (let i=0; i < points.length; i++) {        
+        avgX1 += points[i].x;
+        avgX2 += points[i].y;
+        avgY += scalar[i];
+        avgX1S += Math.pow(points[i].x, 2);
+        avgX2S += Math.pow(points[i].y, 2);
+        avgYS += Math.pow(scalar[i], 2);
+        avgYX1 += scalar[i] * points[i].x;
+        avgYX2 += scalar[i] * points[i].y;
+        avgX1X2 += points[i].x * points[i].y;
     }
 
     avgX1 /= n;
     avgX2 /= n;
-    avgY1 /= n;
-    avgY2 /= n;
+    avgY /= n;
     avgX1S /= n;
     avgX2S /= n;
-    avgY1S /= n;
-    avgY2S /= n;
-    avgY1X1 /= n;
-    avgY2X1 /= n;
-    avgY1X2 /= n;
-    avgY2X2 /= n;
+    avgYS /= n;
+    avgYX1 /= n;
+    avgYX2 /= n;
     avgX1X2 /= n;
 
-    const covY1X1 = avgY1X1 - (avgY1 * avgX1);
-    const covY1X2 = avgY1X2 - (avgY1 * avgX2);
-    const covY2X1 = avgY2X1 - (avgY2 * avgX1);
-    const covY2X2 = avgY2X2 - (avgY2 * avgX2);
+    const covYX1 = avgYX1 - (avgY * avgX1);
+    const covYX2 = avgYX2 - (avgY * avgX2);
     const covX1X2 = avgX1X2 - (avgX1 * avgX2);
 
-    const sigmaY1 = Math.sqrt(avgY1S - Math.pow(avgY1, 2));
-    const sigmaY2 = Math.sqrt(avgY2S - Math.pow(avgY2, 2));
+    const sigmaY = Math.sqrt(avgYS - Math.pow(avgY, 2));
     const sigmaX1 = Math.sqrt(avgX1S - Math.pow(avgX1, 2));
     const sigmaX2 = Math.sqrt(avgX2S - Math.pow(avgX2, 2));
 
-    const rY1X1 = covY1X1 / (sigmaY1 * sigmaX1);
-    const rY1X2 = covY1X2 / (sigmaY1 * sigmaX2);
-    const rY2X1 = covY2X1 / (sigmaY2 * sigmaX1);
-    const rY2X2 = covY2X2 / (sigmaY2 * sigmaX2);
+    const rYX1 = covYX1 / (sigmaY * sigmaX1);
+    const rYX2 = covYX2 / (sigmaY * sigmaX2);
     const rX1X2 = covX1X2 / (sigmaX1 * sigmaX2);
 
-    const y1CoefB1 = (sigmaY1 / sigmaX1) * ((rY1X1 - rY1X2 * rX1X2) / (1 - Math.pow(rX1X2, 2)));
-    const y1CoefB2 = (sigmaY1 / sigmaX2) * ((rY1X2 - rY1X1 * rX1X2) / (1 - Math.pow(rX1X2, 2)));
-    const y1CoefA = avgY1 - y1CoefB1 * avgX1 - y1CoefB2 * avgX2;
-    const y2CoefB1 = (sigmaY2 / sigmaX1) * ((rY2X1 - rY2X2 * rX1X2) / (1 - Math.pow(rX1X2, 2)));
-    const y2CoefB2 = (sigmaY2 / sigmaX2) * ((rY2X2 - rY2X1 * rX1X2) / (1 - Math.pow(rX1X2, 2)));
-    const y2CoefA = avgY2 - y2CoefB1 * avgX1 - y2CoefB2 * avgX2;
+    const b1 = (sigmaY / sigmaX1) * ((rYX1 - rYX2 * rX1X2) / (1 - Math.pow(rX1X2, 2)));
+    const b2 = (sigmaY / sigmaX2) * ((rYX2 - rYX1 * rX1X2) / (1 - Math.pow(rX1X2, 2)));
+    const a = avgY - b1 * avgX1 - b2 * avgX2;
 
-    return (point: GeoPoint) => ({
-        x: y1CoefA + y1CoefB1 * point.x + y1CoefB2 * point.y,
-        y: y2CoefA + y2CoefB1 * point.x + y2CoefB2 * point.y
-    });
+    return (point: GeoPoint) => (a + b1 * point.x + b2 * point.y);
+}
+
+function getInterpolator(point: Point[], scalar: number[]): (point: Point) => number {
+    function IDW(newPoint: Point): number {
+        let wSum = 0;
+        let predScalar = 0;
+
+        const weights = point.map((_, i) => {
+            const d0 = point[i].x - newPoint.x;
+            const d1 = point[i].y - newPoint.y;
+
+            const dist = Math.sqrt(d0*d0 + d1*d1);
+            const weight = 1.0 / Math.pow(dist+1e-12, 2);
+            wSum += weight;
+            return weight;
+        });
+
+        for (let i=0; i < weights.length; i++) {
+            const normWeight = weights[i] / wSum;
+            predScalar += normWeight*scalar[i];
+        }
+
+        return predScalar;
+    }
+    return IDW;
+}
+
+function* flattenSphericalGen(points: GpsPoint[]): Generator<GeoPoint, undefined, undefined> {
+    for (const p of points) {
+        yield flattenSpherical(p)
+    }
+}
+
+function* retriveScalarGen(data: any[], name: string): Generator<number, undefined, undefined> {
+    for (const obj of data) {
+        const scalar = Number(obj[name])
+        if (!scalar || scalar === Number.NaN) {
+            throw TypeError;
+        }
+        yield scalar;
+    }
+}
+
+function pipelineToMap(points: MaperPoint[], userPoint: GpsPoint): Point | undefined {
+    if (points.length < 7) {
+        return undefined;
+    }  
+
+    const flattenPoints = [...flattenSphericalGen(points)];
+    
+    const trueX = [...retriveScalarGen(points, "x")];
+    const trueY = [...retriveScalarGen(points, "y")];
+
+    const regressorX = getRegressor(flattenPoints, trueX);
+    const regressorY = getRegressor(flattenPoints, trueY);
+
+    const linearPredXY = [];
+    const lossX = [];
+    const lossY = [];
+    for (let i=0; i < flattenPoints.length; i++) {
+        const x = regressorX(flattenPoints[i]);
+        const y = regressorY(flattenPoints[i]);
+        linearPredXY.push({
+            x,
+            y
+        });
+        lossX.push(trueX[i] - x);
+        lossY.push(trueY[i] - y);
+    }
+
+    const interpolatorX = getInterpolator(linearPredXY, lossX);
+    const interpolatorY = getInterpolator(linearPredXY, lossY);
+
+    const flattenUserPoint = flattenSpherical(userPoint);
+    const linearPred: Point = {
+        x: regressorX(flattenUserPoint),
+        y: regressorY(flattenUserPoint)
+    };
+    const loss: Point = {
+        x: interpolatorX(linearPred),
+        y: interpolatorY(linearPred)
+    }
+
+    return {
+        x: linearPred.x + loss.x * INTERPOLATION_RATE,
+        y: linearPred.y + loss.y * INTERPOLATION_RATE
+    };
 }
 
 export {
-    fromSphericalToRect,
-    getRegressor
+    pipelineToMap,
+    flattenSpherical
 }
